@@ -101,6 +101,16 @@ class pttCrawler:
 
 
 if __name__ == '__main__':
+    import sys
+
     ptt = pttCrawler()
-    ptt.crawl()
+    if len(sys.argv) == 2:
+        ptt.crawl(int(sys.argv[1]))
+    elif len(sys.argv) == 3:
+        ptt.crawl(int(sys.argv[1]), int(sys.argv[2]))
+    elif len(sys.argv) == 4:
+        ptt.crawl(int(sys.argv[1]), int(sys.argv[2]), sys.argv[3])
+    else:
+        ptt.crawl()
+
     ptt.export()
