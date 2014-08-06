@@ -5,7 +5,7 @@ from time import sleep
 from bs4 import BeautifulSoup
 
 
-class pttCrawler:
+class PTTCrawler:
     def __init__(self):
         self.pttURL = "http://www.ptt.cc/"
         self.result = list()
@@ -103,7 +103,7 @@ class pttCrawler:
 if __name__ == '__main__':
     import sys
 
-    ptt = pttCrawler()
+    ptt = PTTCrawler()
     if len(sys.argv) == 2:
         ptt.crawl(int(sys.argv[1]))
     elif len(sys.argv) == 3:
