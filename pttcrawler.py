@@ -6,14 +6,14 @@ from time import sleep
 from bs4 import BeautifulSoup
 
 
-def crawler(start, end):
+def crawler(start, end, boardName="Gossiping"):
     page = start
     times = end-start+1
     g_id = 0
 
     for a in range(times):
         print('index is ' + str(page))
-        resp = requests.get(url="http://www.ptt.cc/bbs/Gossiping/index" + str(page) + ".html",
+        resp = requests.get(url="http://www.ptt.cc/bbs/"+boardName+"/index" + str(page) + ".html",
                             cookies={"over18": "1"})
         soup = BeautifulSoup(resp.text)
         for tag in soup.find_all("div", "r-ent"):
@@ -80,6 +80,15 @@ def parseGos(link, g_id):
         json_data = json.dumps(d, ensure_ascii=False, indent=4, sort_keys=True)+','
 
         store(json_data)
+
+
+def getLastPageNum(boardName="Gossiping"):
+    resp = requests.get(url="http://www.ptt.cc/bbs/"+boardName+"/index.html",
+                        cookies={"over18": "1"})
+    if re.search("disabled\">下頁", resp.text) is not None:
+        prevPageIdentifier = re.search("index[0-9]+\.html.*上頁", resp.text).group()
+        prevPage = int(re.search("[0-9]+", prevPageIdentifier).group())
+    return prevPage+1
 
 
 def store(data):
