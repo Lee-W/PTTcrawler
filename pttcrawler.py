@@ -3,6 +3,7 @@ import json
 import requests
 from time import sleep
 from bs4 import BeautifulSoup
+from html2text import html2text
 
 
 class PTTCrawler:
@@ -10,7 +11,7 @@ class PTTCrawler:
         self.pttURL = "http://www.ptt.cc/"
         self.result = list()
 
-    def crawl(self, start=None, end=None, boardName="Gossiping", displayProgress=True):
+    def crawl(self, start=None, end=None, boardName="Gossiping", displayProgress=True, reserverContentFormat=False):
         start = self.__countLastPageNum(boardName) if start is None else start
         end = self.__countLastPageNum(boardName) if end is None else end
 
@@ -29,14 +30,14 @@ class PTTCrawler:
                     link = str(tag.find_all("a")).split("\"")
                     link = self.pttURL + link[1]
                     articleID = articleID + 1
-                    self.__parseArticle(link, articleID, displayProgress)
+                    self.__parseArticle(link, articleID, displayProgress, reserverContentFormat)
                 except:
                     print ("error")
                     pass
             sleep(0.2)
         return self.result
 
-    def __parseArticle(self, link, articleID, displayProgress):
+    def __parseArticle(self, link, articleID, displayProgress, reserverContentFormat):
         req = requests.get(url=str(link), cookies={"over18": "1"})
         soup = BeautifulSoup(req.text)
         if displayProgress is True:
@@ -58,6 +59,7 @@ class PTTCrawler:
         a = str(soup.find(id="main-container").contents[1]).split("</div>")
         a = a[4].split("<span class=\"f2\">※ 發信站: 批踢踢實業坊(ptt.cc),")
         content = a[0].replace(' ', '').replace('\n', '').replace('\t', '')
+        content = content if reserverContentFormat is True else self.__parseContet(content)
         # message
         pushSummary, g, b, n, message = dict(), int(), int(), int(), list()
         for tag in soup.find_all("div", "push"):
@@ -90,7 +92,7 @@ class PTTCrawler:
         self.result.append(data)
 
     def __parseContet(self, content):
-        pass
+        return html2text(content)
 
     def __countLastPageNum(self, boardName="Gossiping"):
         resp = requests.get(url="http://www.ptt.cc/bbs/"+boardName+"/index.html",
