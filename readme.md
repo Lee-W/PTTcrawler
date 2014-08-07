@@ -37,7 +37,7 @@ The format is as below
 
 #PREREQUISITES
 python3
-lib : beautifulsoup4, requests
+lib : beautifulsoup4, requests, html2text
 ```
 sudo pip3 install -r requirements.txt
 ```
