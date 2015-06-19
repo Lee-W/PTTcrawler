@@ -2,6 +2,7 @@ import os
 import re
 import json
 import requests
+
 from time import sleep
 from bs4 import BeautifulSoup
 from html2text import html2text
@@ -9,47 +10,52 @@ from html2text import html2text
 
 class PTTCrawler:
     def __init__(self):
-        self.pttURL = "http://www.ptt.cc/"
+        self.PTT_URL = "http://www.ptt.cc/"
+        self.COOKIE = {"over18": "1"}
+
         self.result = list()
         self.boardName = str()
 
-    def crawl(self, start=None, end=None, boardName="Gossiping", displayProgress=True, reserverContentFormat=False):
+    def crawl(self, start=None, end=None, boardName="Gossiping",
+              displayProgress=True, reserve_content_format=False):
         self.boardName = boardName
-        start = self.__countLastPageNum(boardName) if start is None else start
-        end = self.__countLastPageNum(boardName) if end is None else end
-
-        articleID = int()
+        start = self.get_last_page_num(boardName) if start is None else start
+        end = self.get_last_page_num(boardName) if end is None else end
 
         for page in range(start, end+1):
             if displayProgress is True:
                 print('index is ' + str(page))
 
-            boardURL = self.pttURL+"bbs/"+boardName+"/index"+str(page)+".html"
-            req = requests.get(url=boardURL, cookies={"over18": "1"})
+            board_URL = self.PTT_URL+"bbs/"+boardName+"/index"+str(page)+".html"
+            req = requests.get(url=board_URL, cookies=self.COOKIE)
             soup = BeautifulSoup(req.text)
 
+            articleCounter = 0
             for tag in soup.find_all("div", "r-ent"):
                 try:
                     link = str(tag.find_all("a")).split("\"")
-                    link = self.pttURL + link[1]
-                    articleID = articleID + 1
-                    self.__parseArticle(link, articleID, displayProgress, reserverContentFormat)
-                except:
-                    print ("error")
+                    link = self.PTT_URL + link[1]
+                    articleCounter = articleCounter + 1
+                    articleID = str(page)+"-"+str(articleCounter)
+                    self.__parse_article(link, articleID, displayProgress, reserve_content_format)
+                except Exception:
+                    print("Error")
                     pass
             sleep(0.2)
         return self.result
 
-    def __parseArticle(self, link, articleID, displayProgress, reserverContentFormat):
-        req = requests.get(url=str(link), cookies={"over18": "1"})
+    def __parse_article(self, link, articleID, displayProgress, reserve_content_format):
+        req = requests.get(url=str(link), cookies=self.COOKIE)
         soup = BeautifulSoup(req.text)
         if displayProgress is True:
-            print(req.url)
+            print(articleID+"  "+req.url)
 
         # author
-        author = soup.find(id="main-container").contents[1].contents[0].contents[1].string.replace(' ', '')
+        author = soup.find(id="main-container") \
+                     .contents[1].contents[0].contents[1].string.replace(' ', '')
         # title
-        title = soup.find(id="main-container").contents[1].contents[2].contents[1].string.replace(' ', '')
+        title = soup.find(id="main-container") \
+                    .contents[1].contents[2].contents[1].string.replace(' ', '')
         # date
         date = soup.find(id="main-container").contents[1].contents[3].contents[1].string
         # ip
@@ -58,24 +64,29 @@ class PTTCrawler:
             ip = re.search("[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*", str(ip)).group()
         except:
             ip = "ip is not find"
+
         # contents
         a = str(soup.find(id="main-container").contents[1]).split("</div>")
         a = a[4].split("<span class=\"f2\">※ 發信站: 批踢踢實業坊(ptt.cc),")
         content = a[0].replace(' ', '').replace('\n', '').replace('\t', '')
-        content = content if reserverContentFormat is True else self.__parseContet(content)
+        content = content if reserve_content_format is True else html2text(content)
+
         # message
         pushSummary, g, b, n, message = dict(), int(), int(), int(), list()
         for tag in soup.find_all("div", "push"):
             push_tag = tag.find("span", "push-tag").string.replace(' ', '')
             push_userid = tag.find("span", "push-userid").string.replace(' ', '')
             try:
-                push_content = tag.find("span", "push-content").string.replace(' ', '').replace('\n', '').replace('\t', '')
+                push_content = PTTCrawler.__filter_space_character(tag.find("span", "push_content"))
             except:
                 # if there is no content
                 push_content = ""
             push_ipdatetime = tag.find("span", "push-ipdatetime").string.replace('\n', '')
 
-            message.append({"狀態": push_tag, "留言者": push_userid, "留言內容": push_content, "留言時間": push_ipdatetime})
+            message.append({"狀態": push_tag,
+                            "留言者": push_userid,
+                            "留言內容": push_content,
+                            "留言時間": push_ipdatetime})
             if push_tag == '推':
                 g += 1
             elif push_tag == '噓':
@@ -94,12 +105,13 @@ class PTTCrawler:
                 "h_推文總數": pushSummary}
         self.result.append(data)
 
-    def __parseContet(self, content):
-        return html2text(content)
+    @staticmethod
+    def __filter_space_character(content):
+        return content.replace(' ', '').replace('\n', '').replace('\y', '')
 
-    def __countLastPageNum(self, boardName="Gossiping"):
-        resp = requests.get(url="http://www.ptt.cc/bbs/"+boardName+"/index.html",
-                            cookies={"over18": "1"})
+    def get_last_page_num(self, boardName="Gossiping"):
+        current_url = self.PTT_URL+"bbs/"+self.boardName+"/index.html"
+        resp = requests.get(url=current_url, cookies=self.COOKIE)
         if re.search("disabled\">下頁", resp.text) is not None:
             prevPageIdentifier = re.search("index[0-9]+\.html.*上頁", resp.text).group()
             prevPage = int(re.search("[0-9]+", prevPageIdentifier).group())
@@ -112,7 +124,7 @@ class PTTCrawler:
     def export_each_article(self, export_dir="output"):
         try:
             os.makedirs(export_dir+"/"+self.boardName, exist_ok=False)
-        except Exception as e:
+        except Exception:
             pass
 
         for article in self.result:
