@@ -1,3 +1,4 @@
+import os
 import re
 import json
 import requests
@@ -10,8 +11,10 @@ class PTTCrawler:
     def __init__(self):
         self.pttURL = "http://www.ptt.cc/"
         self.result = list()
+        self.boardName = str()
 
     def crawl(self, start=None, end=None, boardName="Gossiping", displayProgress=True, reserverContentFormat=False):
+        self.boardName = boardName
         start = self.__countLastPageNum(boardName) if start is None else start
         end = self.__countLastPageNum(boardName) if end is None else end
 
@@ -106,6 +109,17 @@ class PTTCrawler:
         with open(fileName, 'w') as f:
             json.dump(self.result, f, ensure_ascii=False, indent=4, sort_keys=True)
 
+    def export_each_article(self, export_dir="output"):
+        try:
+            os.makedirs(export_dir+"/"+self.boardName, exist_ok=False)
+        except Exception as e:
+            pass
+
+        for article in self.result:
+            path = export_dir+"/"+self.boardName+"/"+str(article["a_ID"])
+            with open(path, 'w') as f:
+                json.dump(article, f, ensure_ascii=False, indent=4, sort_keys=True)
+
 
 if __name__ == '__main__':
     import sys
@@ -120,4 +134,4 @@ if __name__ == '__main__':
     else:
         ptt.crawl()
 
-    ptt.export()
+    ptt.export_each_article()
