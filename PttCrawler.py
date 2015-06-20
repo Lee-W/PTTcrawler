@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from html2text import html2text
 
 
-class PTTCrawler:
+class PttCrawler:
     def __init__(self):
         self.PTT_URL = "http://www.ptt.cc/"
         self.COOKIE = {"over18": "1"}
@@ -136,7 +136,7 @@ class PTTCrawler:
 if __name__ == '__main__':
     import sys
 
-    ptt = PTTCrawler()
+    ptt = PttCrawler()
     if len(sys.argv) == 2:
         ptt.crawl(int(sys.argv[1]))
     elif len(sys.argv) == 3:
