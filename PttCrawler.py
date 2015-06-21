@@ -96,13 +96,19 @@ class PttCrawler:
         # message
         pushSummary, g, b, n, message = dict(), int(), int(), int(), list()
         for tag in soup.find_all("div", "push"):
-            push_tag = tag.find("span", "push-tag").string.replace(' ', '')
-            push_userid = tag.find("span", "push-userid").string.replace(' ', '')
             try:
-                push_content = PttCrawler.__filter_space_character(tag.find("span", "push_content"))
+                push_tag = tag.find("span", "f1 hl push-tag").string.replace(' ', '')
+            except:
+                push_tag = tag.find("span", "hl push-tag").string.replace(' ', '')
+
+            push_userid = tag.find("span", "f3 hl push-userid").string.replace(' ', '')
+
+            try:
+                push_content = tag.find("span", "f3 push-content").string
             except:
                 # if there is no content
                 push_content = ""
+
             push_ipdatetime = tag.find("span", "push-ipdatetime").string.replace('\n', '')
 
             message.append({"狀態": push_tag,
