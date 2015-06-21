@@ -92,12 +92,9 @@ class PttCrawler(object):
 
         # contents
         a = str(soup.find(id="main-container").contents[1]).split("</div>")
-        # a = unicode(a[4]).split(u"<span class=\"f2\">※ 發信站: 批踢踢實業坊(ptt.cc)")
-        # a = a[4].encode("utf-8")
-        a = a[4]
-        print(type(a[4]))
-        # content = a[0].replace(' ', '').replace('\n', '').replace('\t', '')
-        # content = PttCrawler._strip_html(content)
+        a = a[4].decode("utf-8").split(u"<span class=\"f2\">※ 發信站: 批踢踢實業坊(ptt.cc)")
+        content = a[0].replace(' ', '').replace('\n', '').replace('\t', '')
+        content = PttCrawler._strip_html(content)
 
         # message
         pushSummary, g, b, n, message = dict(), int(), int(), int(), list()
@@ -134,7 +131,7 @@ class PttCrawler(object):
                 u"c_標題": unicode(title),
                 u"d_日期": date,
                 u"e_ip": ip,
-                # u"f_內文": unicode(content),
+                u"f_內文": unicode(content),
                 u"g_推文": message,
                 u"h_推文總數": pushSummary,
                 u"i_連結": unicode(link)}
