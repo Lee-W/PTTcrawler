@@ -60,10 +60,12 @@ class PttCrawler:
                     article = self.__parse_article(link, articleID, display_progress)
                     if export_each:
                         self.export_article(article)
+                    self.result.append(article)
                 except Exception as e:
                     print("Error")
                     print(e)
             sleep(0.2)
+        return self.result
 
     def __parse_article(self, link, articleID, displayProgress):
         req = requests.get(url=str(link), cookies=self.COOKIE)
@@ -90,7 +92,7 @@ class PttCrawler:
         a = str(soup.find(id="main-container").contents[1]).split("</div>")
         a = a[4].split("<span class=\"f2\">※ 發信站: 批踢踢實業坊(ptt.cc)")
         content = a[0].replace(' ', '').replace('\n', '').replace('\t', '')
-        content = html2text(content)
+        content = PttCrawler._strip_html(content)
 
         # message
         pushSummary, g, b, n, message = dict(), int(), int(), int(), list()
@@ -153,6 +155,11 @@ class PttCrawler:
     def export(self, fileName="output.json"):
         with open(fileName, 'w') as f:
             json.dump(self.result, f, ensure_ascii=False, indent=4, sort_keys=True)
+
+    @staticmethod
+    def _strip_html(html):
+        content = re.compile(r'<.*?>')
+        return content.sub('', html)
 
 
 if __name__ == '__main__':
