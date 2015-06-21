@@ -1,3 +1,5 @@
+# coding=utf-8
+
 import os
 import re
 import json
@@ -7,7 +9,7 @@ from time import sleep
 from bs4 import BeautifulSoup
 
 
-class PttCrawler:
+class PttCrawler(object):
     PTT_URL = "http://www.ptt.cc/"
     COOKIE = {"over18": "1"}
 
@@ -71,6 +73,7 @@ class PttCrawler:
         soup = BeautifulSoup(req.text)
         if displayProgress is True:
             print(articleID+"  "+req.url)
+        data = list()
 
         # author
         author = soup.find(id="main-container") \
@@ -82,16 +85,19 @@ class PttCrawler:
         date = soup.find(id="main-container").contents[1].contents[3].contents[1].string
         # ip
         try:
-            ip = soup.find(text=re.compile("※ 發信站:"))
+            ip = soup.find(text=re.compile(u"※ 發信站:"))
             ip = re.search("[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*", str(ip)).group()
         except:
             ip = "ip is not find"
 
         # contents
         a = str(soup.find(id="main-container").contents[1]).split("</div>")
-        a = a[4].split("<span class=\"f2\">※ 發信站: 批踢踢實業坊(ptt.cc)")
-        content = a[0].replace(' ', '').replace('\n', '').replace('\t', '')
-        content = PttCrawler._strip_html(content)
+        # a = unicode(a[4]).split(u"<span class=\"f2\">※ 發信站: 批踢踢實業坊(ptt.cc)")
+        # a = a[4].encode("utf-8")
+        a = a[4]
+        print(type(a[4]))
+        # content = a[0].replace(' ', '').replace('\n', '').replace('\t', '')
+        # content = PttCrawler._strip_html(content)
 
         # message
         pushSummary, g, b, n, message = dict(), int(), int(), int(), list()
@@ -105,27 +111,27 @@ class PttCrawler:
                 push_content = ""
             push_ipdatetime = tag.find("span", "push-ipdatetime").string.replace('\n', '')
 
-            message.append({"狀態": push_tag,
-                            "留言者": push_userid,
-                            "留言內容": push_content,
-                            "留言時間": push_ipdatetime})
-            if push_tag == '推':
+            message.append({u"狀態": unicode(push_tag),
+                            u"留言者": unicode(push_userid),
+                            u"留言內容": unicode(push_content),
+                            u"留言時間": unicode(push_ipdatetime)})
+            if push_tag == u'推':
                 g += 1
-            elif push_tag == '噓':
+            elif push_tag == u'噓':
                 b += 1
             else:
                 n += 1
-            pushSummary = {"推": g, "噓": b, "none": n, "all": len(message)}
+            pushSummary = {u"推": g, u"噓": b, "none": n, "all": len(message)}
 
-        data = {"a_ID": articleID,
-                "b_作者": author,
-                "c_標題": title,
-                "d_日期": date,
-                "e_ip": ip,
-                "f_內文": content,
-                "g_推文": message,
-                "h_推文總數": pushSummary,
-                "i_連結": link}
+        data = {u"a_ID": articleID,
+                u"b_作者": unicode(author),
+                u"c_標題": unicode(title),
+                u"d_日期": date,
+                u"e_ip": ip,
+                # u"f_內文": unicode(content),
+                u"g_推文": message,
+                u"h_推文總數": pushSummary,
+                u"i_連結": unicode(link)}
         return data
 
     @staticmethod
@@ -136,8 +142,8 @@ class PttCrawler:
     def get_last_page_num(board_name):
         current_url = PttCrawler.PTT_URL+"bbs/"+board_name+"/index.html"
         resp = requests.get(url=current_url, cookies=PttCrawler.COOKIE)
-        if re.search("disabled\">下頁", resp.text) is not None:
-            prevPageIdentifier = re.search("index[0-9]+\.html.*上頁", resp.text).group()
+        if re.search(u"disabled\">下頁", resp.text) is not None:
+            prevPageIdentifier = re.search(u"index[0-9]+\.html.*上頁", resp.text).group()
             prevPage = int(re.search("[0-9]+", prevPageIdentifier).group())
         return prevPage+1
 
@@ -149,7 +155,8 @@ class PttCrawler:
 
         file_name = self.export_path+"/"+self.board_name+"/"+str(article["a_ID"])
         with open(file_name, "w") as f:
-            json.dump(article, f, ensure_ascii=False, indent=4, sort_keys=True)
+            json_content = json.dumps(article, ensure_ascii=False, sort_keys=True, indent=4)
+            f.write(json_content.encode("utf-8"))
 
     def export(self, fileName="output.json"):
         with open(fileName, 'w') as f:
