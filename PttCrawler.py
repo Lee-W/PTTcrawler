@@ -5,7 +5,6 @@ import requests
 
 from time import sleep
 from bs4 import BeautifulSoup
-from html2text import html2text
 
 
 class PttCrawler:
@@ -40,7 +39,7 @@ class PttCrawler:
         start = last_page_num if start is None else start
         end = last_page_num if end is None else end
 
-        for page in range(start, end+1):
+        for page in reversed(range(start, end+1)):
             if display_progress is True:
                 print('index is ' + str(page))
 
@@ -166,7 +165,6 @@ if __name__ == '__main__':
     import sys
 
     ptt = PttCrawler()
-    ptt.board_name = "Gossiping"
     if len(sys.argv) == 2:
         ptt.crawl(int(sys.argv[1]))
     elif len(sys.argv) == 3:
