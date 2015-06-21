@@ -38,8 +38,9 @@ class PttCrawler:
                     articleCounter = articleCounter + 1
                     articleID = str(page)+"-"+str(articleCounter)
                     self.__parse_article(link, articleID, displayProgress, reserve_content_format)
-                except Exception:
+                except Exception as e:
                     print("Error")
+                    print(e)
                     pass
             sleep(0.2)
         return self.result
@@ -49,6 +50,7 @@ class PttCrawler:
         soup = BeautifulSoup(req.text)
         if displayProgress is True:
             print(articleID+"  "+req.url)
+            print(link)
 
         # author
         author = soup.find(id="main-container") \
@@ -67,7 +69,7 @@ class PttCrawler:
 
         # contents
         a = str(soup.find(id="main-container").contents[1]).split("</div>")
-        a = a[4].split("<span class=\"f2\">※ 發信站: 批踢踢實業坊(ptt.cc),")
+        a = a[4].split("<span class=\"f2\">※ 發信站: 批踢踢實業坊(ptt.cc)")
         content = a[0].replace(' ', '').replace('\n', '').replace('\t', '')
         content = content if reserve_content_format is True else html2text(content)
 
@@ -77,7 +79,7 @@ class PttCrawler:
             push_tag = tag.find("span", "push-tag").string.replace(' ', '')
             push_userid = tag.find("span", "push-userid").string.replace(' ', '')
             try:
-                push_content = PTTCrawler.__filter_space_character(tag.find("span", "push_content"))
+                push_content = PttCrawler.__filter_space_character(tag.find("span", "push_content"))
             except:
                 # if there is no content
                 push_content = ""
@@ -102,7 +104,8 @@ class PttCrawler:
                 "e_ip": ip,
                 "f_內文": content,
                 "g_推文": message,
-                "h_推文總數": pushSummary}
+                "h_推文總數": pushSummary,
+                "i_連結": link}
         self.result.append(data)
 
     @staticmethod
