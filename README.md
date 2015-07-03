@@ -1,4 +1,4 @@
-#PTTcraweler
+#PttCraweler
 This is a repo fork from https://github.com/wy36101299/PTTcrawler
 I rewrite it to a module so that it can be extended for further usage.
 
@@ -33,7 +33,8 @@ The format is as below
         "噓": 噓數,
         "推": 推數,
         "none": →數
-    }
+    },
+    "i_連結": 原始連結
 
 #PREREQUISITES
 python3
