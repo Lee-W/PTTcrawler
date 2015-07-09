@@ -43,8 +43,8 @@ class PttCrawler:
             if display_progress is True:
                 print('index is ' + str(page))
 
-            board_URL = self.PTT_URL+"bbs/"+self.board_name+"/index"+str(page)+".html"
-            req = requests.get(url=board_URL, cookies=self.COOKIE)
+            board_url = self.PTT_URL+"bbs/"+self.board_name+"/index"+str(page)+".html"
+            req = requests.get(url=board_url, cookies=self.COOKIE)
             soup = BeautifulSoup(req.text)
 
             article_counter = 0
@@ -54,23 +54,22 @@ class PttCrawler:
                     link = self.PTT_URL + link[1]
 
                     article_counter = article_counter + 1
-                    articleID = str(page)+"-"+str(article_counter)
+                    article_id = str(page)+"-"+str(article_counter)
 
-                    article = self.__parse_article(link, articleID, display_progress)
+                    article = self.__parse_article(link, article_id, display_progress)
                     if export_each:
                         self.export_article(article)
                     self.result.append(article)
-                except Exception as e:
-                    print("Error")
-                    print(e)
+                except AttributeError:
+                    print("Article removed")
             sleep(0.2)
         return self.result
 
-    def __parse_article(self, link, articleID, displayProgress):
+    def __parse_article(self, link, article_id, display_progress):
         req = requests.get(url=str(link), cookies=self.COOKIE)
         soup = BeautifulSoup(req.text)
-        if displayProgress is True:
-            print(articleID+"  "+req.url)
+        if display_progress is True:
+            print(article_id+"  "+req.url)
 
         # author
         author = soup.find(id="main-container") \
@@ -83,29 +82,29 @@ class PttCrawler:
         # ip
         try:
             ip = soup.find(text=re.compile("※ 發信站:"))
-            ip = re.search("[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*", str(ip)).group()
-        except:
+            ip = re.search(r"[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*", str(ip)).group()
+        except AttributeError:
             ip = "ip is not find"
 
         # contents
-        a = str(soup.find(id="main-container").contents[1]).split("</div>")
-        a = a[4].split("<span class=\"f2\">※ 發信站: 批踢踢實業坊(ptt.cc)")
-        content = a[0].replace(' ', '').replace('\n', '').replace('\t', '')
+        content = str(soup.find(id="main-container").contents[1]).split("</div>")
+        content = content[4].split("<span class=\"f2\">※ 發信站: 批踢踢實業坊(ptt.cc)")
+        content = content[0].replace(' ', '').replace('\n', '').replace('\t', '')
         content = PttCrawler._strip_html(content)
 
         # message
-        pushSummary, g, b, n, message = dict(), int(), int(), int(), list()
+        push_summary, good, bad, none, message = dict(), int(), int(), int(), list()
         for tag in soup.find_all("div", "push"):
             try:
                 push_tag = tag.find("span", "f1 hl push-tag").string.replace(' ', '')
-            except:
+            except AttributeError:
                 push_tag = tag.find("span", "hl push-tag").string.replace(' ', '')
 
             push_userid = tag.find("span", "f3 hl push-userid").string.replace(' ', '')
 
             try:
                 push_content = tag.find("span", "f3 push-content").string
-            except:
+            except AttributeError:
                 # if there is no content
                 push_content = ""
 
@@ -116,49 +115,49 @@ class PttCrawler:
                             "留言內容": push_content,
                             "留言時間": push_ipdatetime})
             if push_tag == '推':
-                g += 1
+                good += 1
             elif push_tag == '噓':
-                b += 1
+                bad += 1
             else:
-                n += 1
-            pushSummary = {"推": g, "噓": b, "none": n, "all": len(message)}
+                none += 1
+            push_summary = {"推": good, "噓": bad, "none": none, "all": len(message)}
 
-        data = {"a_ID": articleID,
+        data = {"a_ID": article_id,
                 "b_作者": author,
                 "c_標題": title,
                 "d_日期": date,
                 "e_ip": ip,
                 "f_內文": content,
                 "g_推文": message,
-                "h_推文總數": pushSummary,
+                "h_推文總數": push_summary,
                 "i_連結": link}
         return data
 
     @staticmethod
     def __filter_space_character(content):
-        return content.replace(' ', '').replace('\n', '').replace('\y', '')
+        return content.replace(' ', '').replace('\n', '').replace(r'\y', '')
 
     @staticmethod
     def get_last_page_num(board_name):
         current_url = PttCrawler.PTT_URL+"bbs/"+board_name+"/index.html"
         resp = requests.get(url=current_url, cookies=PttCrawler.COOKIE)
         if re.search("disabled\">下頁", resp.text) is not None:
-            prevPageIdentifier = re.search("index[0-9]+\.html.*上頁", resp.text).group()
-            prevPage = int(re.search("[0-9]+", prevPageIdentifier).group())
-        return prevPage+1
+            prev_page_identifer = re.search(r"index[0-9]+\.html.*上頁", resp.text).group()
+            prev_page = int(re.search("[0-9]+", prev_page_identifer).group())
+        return prev_page+1
 
     def export_article(self, article):
         try:
             os.makedirs(self.export_path+"/"+self.board_name, exist_ok=True)
-        except Exception:
+        except FileExistsError:
             pass
 
         file_name = self.export_path+"/"+self.board_name+"/"+str(article["a_ID"])
         with open(file_name, "w") as f:
             json.dump(article, f, ensure_ascii=False, indent=4, sort_keys=True)
 
-    def export(self, fileName="output.json"):
-        with open(fileName, 'w') as f:
+    def export(self, file_name="output.json"):
+        with open(file_name, 'w') as f:
             json.dump(self.result, f, ensure_ascii=False, indent=4, sort_keys=True)
 
     @staticmethod
