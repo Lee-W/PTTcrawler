@@ -88,7 +88,7 @@ class PttCrawler:
 
         # contents
         content = str(soup.find(id="main-container").contents[1]).split("</div>")
-        content = content[4].split("<span class=\"f2\">※ 發信站: 批踢踢實業坊(ptt.cc)")
+        content = content[4].split("<span class=\"f2\">")
         content = content[0].replace(' ', '').replace('\n', '').replace('\t', '')
         content = PttCrawler._strip_html(content)
 
