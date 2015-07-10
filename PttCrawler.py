@@ -32,16 +32,14 @@ class PttCrawler:
     def export_pathe(self, value):
         self._export_path = value
 
-    def crawl(self, start=None, end=None,
-              display_progress=True, export_each=True):
+    def crawl(self, start=None, end=None, export_each=True):
         last_page_num = self.get_last_page_num(self.board_name)
 
         start = last_page_num if start is None else start
         end = last_page_num if end is None else end
 
         for page in reversed(range(start, end+1)):
-            if display_progress is True:
-                print('index is ' + str(page))
+            print('index is ' + str(page))
 
             board_url = self.PTT_URL+"bbs/"+self.board_name+"/index"+str(page)+".html"
             req = requests.get(url=board_url, cookies=self.COOKIE)
@@ -56,7 +54,7 @@ class PttCrawler:
                     article_counter = article_counter + 1
                     article_id = str(page)+"-"+str(article_counter)
 
-                    article = self.__parse_article(link, article_id, display_progress)
+                    article = self.__parse_article(link, article_id)
                     if export_each:
                         self.export_article(article)
                     self.result.append(article)
@@ -65,11 +63,10 @@ class PttCrawler:
             sleep(0.2)
         return self.result
 
-    def __parse_article(self, link, article_id, display_progress):
+    def __parse_article(self, link, article_id):
         req = requests.get(url=str(link), cookies=self.COOKIE)
         soup = BeautifulSoup(req.text)
-        if display_progress is True:
-            print(article_id+"  "+req.url)
+        print(article_id+"  "+req.url)
 
         # author
         author = soup.find(id="main-container") \
