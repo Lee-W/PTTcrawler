@@ -29,7 +29,7 @@ class PttCrawler:
         return self._export_path
 
     @export_path.setter
-    def export_pathe(self, value):
+    def export_path(self, value):
         self._export_path = value
 
     def crawl(self, start=None, end=None, export_each=True):
@@ -41,8 +41,8 @@ class PttCrawler:
         for page in reversed(range(start, end+1)):
             print('index is ' + str(page))
 
-            board_url = self.PTT_URL+"bbs/"+self.board_name+"/index"+str(page)+".html"
-            req = requests.get(url=board_url, cookies=self.COOKIE)
+            page_url = self.PTT_URL+"bbs/"+self.board_name+"/index"+str(page)+".html"
+            req = requests.get(url=page_url, cookies=self.COOKIE)
             soup = BeautifulSoup(req.text)
 
             article_counter = 0
@@ -59,9 +59,18 @@ class PttCrawler:
                         self.export_article(article)
                     self.result.append(article)
                 except AttributeError:
-                    print("Article removed")
+                    print("Article has been removed")
             sleep(0.2)
         return self.result
+
+    @staticmethod
+    def get_last_page_num(board_name):
+        current_url = PttCrawler.PTT_URL+"bbs/"+board_name+"/index.html"
+        resp = requests.get(url=current_url, cookies=PttCrawler.COOKIE)
+        if re.search("disabled\">下頁", resp.text) is not None:
+            prev_page_identifer = re.search(r"index[0-9]+\.html.*上頁", resp.text).group()
+            prev_page = int(re.search("[0-9]+", prev_page_identifer).group())
+        return prev_page+1
 
     def __parse_article(self, link, article_id):
         req = requests.get(url=str(link), cookies=self.COOKIE)
@@ -129,19 +138,6 @@ class PttCrawler:
                 "h_推文總數": push_summary,
                 "i_連結": link}
         return data
-
-    @staticmethod
-    def __filter_space_character(content):
-        return content.replace(' ', '').replace('\n', '').replace(r'\y', '')
-
-    @staticmethod
-    def get_last_page_num(board_name):
-        current_url = PttCrawler.PTT_URL+"bbs/"+board_name+"/index.html"
-        resp = requests.get(url=current_url, cookies=PttCrawler.COOKIE)
-        if re.search("disabled\">下頁", resp.text) is not None:
-            prev_page_identifer = re.search(r"index[0-9]+\.html.*上頁", resp.text).group()
-            prev_page = int(re.search("[0-9]+", prev_page_identifer).group())
-        return prev_page+1
 
     def export_article(self, article):
         try:
