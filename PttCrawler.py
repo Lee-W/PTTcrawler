@@ -147,8 +147,8 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--start-page')
-    parser.add_argument('-e', '--end-page')
+    parser.add_argument('-s', '--start-page', type=int)
+    parser.add_argument('-e', '--end-page', type=int)
     parser.add_argument('-b', '--board-name', default='Gossiping')
     args = parser.parse_args()
 
