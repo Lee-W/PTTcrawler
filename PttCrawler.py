@@ -13,24 +13,8 @@ class PttCrawler:
 
     def __init__(self):
         self.result = list()
-        self._board_name = "Gossiping"
-        self._export_path = "output"
-
-    @property
-    def board_name(self):
-        return self._board_name
-
-    @board_name.setter
-    def board_name(self, value):
-        self._board_name = value
-
-    @property
-    def export_path(self):
-        return self._export_path
-
-    @export_path.setter
-    def export_path(self, value):
-        self._export_path = value
+        self.board_name = "Gossiping"
+        self.export_path = "output"
 
     def crawl(self, start=None, end=None, export_each=True):
         last_page_num = self.get_last_page_num(self.board_name)
