@@ -1,9 +1,9 @@
 import os
 import re
 import json
-import requests
-
 from time import sleep
+
+import requests
 from bs4 import BeautifulSoup
 
 
@@ -43,7 +43,7 @@ class PttCrawler:
 
             page_url = self.PTT_URL+"bbs/"+self.board_name+"/index"+str(page)+".html"
             req = requests.get(url=page_url, cookies=self.COOKIE)
-            soup = BeautifulSoup(req.text)
+            soup = BeautifulSoup(req.text, 'html5lib')
 
             article_counter = 0
             for tag in soup.find_all("div", "r-ent"):
@@ -159,16 +159,19 @@ class PttCrawler:
         return content.sub('', html)
 
 
-if __name__ == '__main__':
-    import sys
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--start-page')
+    parser.add_argument('-e', '--end-page')
+    parser.add_argument('-b', '--board-name', default='Gossiping')
+    args = parser.parse_args()
 
     ptt = PttCrawler()
-    if len(sys.argv) == 2:
-        ptt.crawl(int(sys.argv[1]))
-    elif len(sys.argv) == 3:
-        ptt.crawl(int(sys.argv[1]), int(sys.argv[2]))
-    elif len(sys.argv) == 4:
-        ptt.board_name = sys.argv[3]
-        ptt.crawl(int(sys.argv[1]), int(sys.argv[2]))
-    else:
-        ptt.crawl()
+    ptt.board_name = args.board_name
+    ptt.crawl(args.start_page, args.end_page)
+
+
+if __name__ == '__main__':
+    main()
