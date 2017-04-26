@@ -1,8 +1,8 @@
-#PttCraweler
+# PttCraweler
 This is a repo fork from https://github.com/wy36101299/PTTcrawler
 I rewrite it to a module so that it can be extended for further usage.
 
-#USAGE
+# USAGE
 This is the basic usage of this script
 ```python3
 python3 pttcraweler.py [start-page] [end-page] [boardName]
