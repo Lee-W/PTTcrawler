@@ -1,10 +1,14 @@
 import os
 import re
 import json
+import logging
 from time import sleep
 
 import requests
 from bs4 import BeautifulSoup
+
+
+logging.basicConfig(level=logging.INFO)
 
 
 class PttCrawler:
@@ -23,11 +27,12 @@ class PttCrawler:
         end = last_page_num if end is None else end
 
         for page in reversed(range(start, end+1)):
-            print('index is ' + str(page))
+            logging.info('index is ' + str(page))
 
-            page_url = self.PTT_URL+"bbs/"+self.board_name+"/index"+str(page)+".html"
+            page_url = f'{self.PTT_URL}bbs/{self.board_name}/index{str(page)}.html'
+            logging.info(f'Parsing {page_url}')
             req = requests.get(url=page_url, cookies=self.COOKIE)
-            soup = BeautifulSoup(req.text, 'html5lib')
+            soup = BeautifulSoup(req.text, 'lxml')
 
             article_counter = 0
             for tag in soup.find_all("div", "r-ent"):
@@ -43,15 +48,17 @@ class PttCrawler:
                         self.export_article(article)
                     self.result.append(article)
                 except AttributeError:
-                    print("Article has been removed")
+                    logging.error('Article has been removed')
+                except Exception as err:
+                    logging.error(err)
             sleep(0.2)
         return self.result
 
     @staticmethod
     def get_last_page_num(board_name):
-        current_url = PttCrawler.PTT_URL+"bbs/"+board_name+"/index.html"
+        current_url = f'{PttCrawler.PTT_URL}bbs/{board_name}/index.html'
         resp = requests.get(url=current_url, cookies=PttCrawler.COOKIE)
-        if re.search("disabled\">下頁", resp.text) is not None:
+        if re.search('disabled">下頁', resp.text) is not None:
             prev_page_identifer = re.search(r"index[0-9]+\.html.*上頁", resp.text).group()
             prev_page = int(re.search("[0-9]+", prev_page_identifer).group())
         return prev_page+1
@@ -59,14 +66,20 @@ class PttCrawler:
     def __parse_article(self, link, article_id):
         req = requests.get(url=str(link), cookies=self.COOKIE)
         soup = BeautifulSoup(req.text)
-        print(article_id+"  "+req.url)
+        logging.info(f'{article_id}\t{req.url}')
 
         # author
-        author = soup.find(id="main-container") \
-                     .contents[1].contents[0].contents[1].string.replace(' ', '')
+        author = (
+            soup.find(id="main-container")
+            .contents[1].contents[0].contents[1]
+            .text.replace(' ', '')
+        )
         # title
-        title = soup.find(id="main-container") \
-                    .contents[1].contents[2].contents[1].string.replace(' ', '')
+        title = (
+            soup.find(id="main-container")
+            .contents[1].contents[2].contents[1]
+            .text.replace(' ', '')
+        )
         # date
         date = soup.find(id="main-container").contents[1].contents[3].contents[1].string
         # ip
@@ -74,7 +87,7 @@ class PttCrawler:
             ip = soup.find(text=re.compile("※ 發信站:"))
             ip = re.search(r"[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*", str(ip)).group()
         except AttributeError:
-            ip = "ip is not find"
+            ip = "ip is not found"
 
         # contents
         content = str(soup.find(id="main-container").contents[1]).split("</div>")
@@ -129,7 +142,7 @@ class PttCrawler:
         except FileExistsError:
             pass
 
-        file_name = self.export_path+"/"+self.board_name+"/"+str(article["a_ID"])
+        file_name = f'{self.export_path}/{self.board_name}/{str(article["a_ID"])}.json'
         with open(file_name, "w") as f:
             json.dump(article, f, ensure_ascii=False, indent=4, sort_keys=True)
 
@@ -150,11 +163,14 @@ def main():
     parser.add_argument('-s', '--start-page', type=int)
     parser.add_argument('-e', '--end-page', type=int)
     parser.add_argument('-b', '--board-name', default='Gossiping')
+    parser.add_argument('--export-each', action='store_true')
     args = parser.parse_args()
 
     ptt = PttCrawler()
     ptt.board_name = args.board_name
-    ptt.crawl(args.start_page, args.end_page)
+    ptt.crawl(args.start_page, args.end_page, export_each=args.export_each)
+    if not args.export_each:
+        ptt.export()
 
 
 if __name__ == '__main__':

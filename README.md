@@ -1,11 +1,11 @@
 # PttCraweler
-This is a repo fork from https://github.com/wy36101299/PTTcrawler
-I rewrite it to a module so that it can be extended for further usage.
+This is a repo fork from https://github.com/wy36101299/PTTcrawler  
+I rewrite it into a module so that it can be extended for further usage.
 
-# USAGE
+## Usage
 This is the basic usage of this script
 ```python3
-python3 pttcraweler.py [start-page] [end-page] [boardName]
+python3 ptt_craweler.py [start-page] [end-page] [boardName]
 ```
 the default value for start-page and end-page are the last page of the board
 the default value for boardName is Gossiping
@@ -36,10 +36,9 @@ The format is as below
     },
     "i_連結": 原始連結
 
-#PREREQUISITES
-python3
-lib : beautifulsoup4, requests, html2text
-```
-sudo pip3 install -r requirements.txt
-```
+## Prerequisites
+- Python3
 
+```sh
+pip install -r requirements.txt
+```
