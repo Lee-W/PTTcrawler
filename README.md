@@ -1,12 +1,14 @@
 # PttCraweler
-This is a repo fork from https://github.com/wy36101299/PTTcrawler  
+This is a repo fork from [wy36101299/PTTcrawler](https://github.com/wy36101299/PTTcrawler)  
 I rewrite it into a module so that it can be extended for further usage.
 
 ## Usage
 This is the basic usage of this script
+
 ```python3
-python3 ptt_craweler.py [start-page] [end-page] [boardName]
+python3 ptt_crawler [start-page] [end-page] [boardName]
 ```
+
 the default value for start-page and end-page are the last page of the board
 the default value for boardName is Gossiping
 *Note that the sequence matters.*
@@ -14,6 +16,7 @@ the default value for boardName is Gossiping
 After parsing from PTT, it will generte output.json.
 The format is as below
 
+```text
     "a_ID": 編號,
     "b_作者": 作者名,
     "c_標題": 標題,
@@ -35,10 +38,11 @@ The format is as below
         "none": →數
     },
     "i_連結": 原始連結
+```
 
 ## Prerequisites
-- Python3
+* Python3
 
 ```sh
-pip install -r requirements.txt
+pipenv install
 ```
